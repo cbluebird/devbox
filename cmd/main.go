@@ -10,12 +10,17 @@ import (
 )
 
 func main() {
-	tag.Init()
+	user := flag.String("user", "admin", "Username for authentication")
+	password := flag.String("password", "password", "Password for authentication")
 	DebugFlag := flag.Bool("debug", false, "debug mode")
+	flag.Parse()
+
+	tag.Init(*user, *password)
 	slog.SetLogLoggerLevel(slog.LevelInfo)
 	if *DebugFlag {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
+
 	r := gin.Default()
 	r.POST("/tag", api.Tag)
 	r.Run(":8080")

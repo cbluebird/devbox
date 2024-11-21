@@ -1,7 +1,6 @@
 package tag
 
 import (
-	"flag"
 	"log/slog"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -21,12 +20,10 @@ type ImageOptions struct {
 	Tag       string
 }
 
-func Init() {
-	user := flag.String("user", "admin", "Username for authentication")
-	password := flag.String("password", "password", "Password for authentication")
+func Init(user, password string) {
 	TagClient = &Client{
-		Username: *user,
-		Password: *password,
+		Username: user,
+		Password: password,
 	}
 }
 

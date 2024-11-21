@@ -20,7 +20,10 @@ func Tag(c *gin.Context) {
 	}
 
 	if err := tag.TagClient.Tag(request.Original, request.Target); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    500,
+		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
