@@ -4,15 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/labring/sealos/service/devbox/pkg/registry"
+	tag "github.com/labring/sealos/service/devbox/pkg/registry"
 )
 
 type TagRequest struct {
 	Original string `json:"original"`
 	Target   string `json:"target"`
-}
-
-type TagResponse struct {
 }
 
 func Tag(c *gin.Context) {
@@ -21,9 +18,13 @@ func Tag(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := registry.Tag(request.Original, request.Target); err != nil {
+
+	if err := tag.TagClient.Tag(request.Original, request.Target); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, TagResponse{})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "tag success",
+		"code":    200,
+	})
 }

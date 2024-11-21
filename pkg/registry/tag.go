@@ -1,15 +1,14 @@
-package registry
+package tag
 
 import (
-	"log"
+	"flag"
+	"log/slog"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/heroku/docker-registry-client/registry"
 )
 
-func Tag(original, target string) error {
-	return nil
-}
+var TagClient *Client
 
 type Client struct {
 	Username string
@@ -22,33 +21,43 @@ type ImageOptions struct {
 	Tag       string
 }
 
-func (c *Client) ReTag(originImage, newImage string) error {
+func Init() {
+	user := flag.String("user", "admin", "Username for authentication")
+	password := flag.String("password", "password", "Password for authentication")
+	TagClient = &Client{
+		Username: *user,
+		Password: *password,
+	}
+}
 
+func (c *Client) Tag(originImage, newImage string) error {
 	originOpt, err := GetImageInfo(originImage)
 	if err != nil {
-		log.Fatalf("Error getting origin image info: %v", err)
+		slog.Error("Error getting origin image info", "Error", err)
+		return err
 	}
 	newOpt, err := GetImageInfo(newImage)
 	if err != nil {
-		log.Fatalf("Error getting new image info: %v", err)
+		slog.Error("Error getting new image info", "Error", err)
+		return err
 	}
 
 	hub, err := registry.New("http://"+originOpt.HostName, c.Username, c.Password)
 	if nil != err {
-		log.Println("failed to create hub", err)
+		slog.Error("Failed to create hub", "Error", err)
 		return err
 	}
 	manifest, err := hub.ManifestV2(originOpt.ImageName, originOpt.Tag)
 	if nil != err {
-		log.Println("failed to get manifest", err)
+		slog.Error("Failed to get manifest", "Error", err)
 		return err
 	}
 	err = hub.PutManifest(newOpt.ImageName, newOpt.Tag, manifest)
 	if err != nil {
-		log.Println("failed to put manifest", err)
+		slog.Error("Failed to put manifest", "Error", err)
 		return err
 	}
-	log.Println("Successfully pushed manifest to", newOpt.ImageName)
+	slog.Info("Tag success", "OriginImage", originImage, "NewImage", newImage)
 	return nil
 }
 
@@ -58,10 +67,6 @@ func GetImageInfo(imageRef string) (*ImageOptions, error) {
 		return nil, err
 	}
 	repo := res.Context()
-	log.Println(repo.RegistryStr())
-	log.Println(repo.RepositoryStr())
-	log.Println(res.Identifier())
-
 	return &ImageOptions{
 		HostName:  repo.RegistryStr(),
 		ImageName: repo.RepositoryStr(),

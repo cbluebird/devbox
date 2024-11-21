@@ -1,4 +1,4 @@
-package registry
+package tag
 
 import (
 	"testing"
@@ -6,10 +6,10 @@ import (
 
 func TestTag(t *testing.T) {
 	client := &Client{
-		Username: "",
-		Password: "",
+		Username: "admin",
+		Password: "password",
 	}
-	err := client.ReTag("sealos.hub:5000/cbluebird/crk-nginx-test:latest-1", "sealos.hub:5000/cbluebird/crk-nginx-test:latest-2")
+	err := client.Tag("sealos.hub:5000/cbluebird/crk-nginx-test:latest-1", "sealos.hub:5000/cbluebird/crk-nginx-test:latest-2")
 	if err != nil {
 		return
 	}

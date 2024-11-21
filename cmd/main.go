@@ -1,13 +1,21 @@
 package main
 
 import (
+	"flag"
+	"log/slog"
+
 	"github.com/gin-gonic/gin"
 	"github.com/labring/sealos/service/devbox/api"
-	"log/slog"
+	tag "github.com/labring/sealos/service/devbox/pkg/registry"
 )
 
 func main() {
-	slog.SetLogLoggerLevel(slog.LevelDebug)
+	tag.Init()
+	DebugFlag := flag.Bool("debug", false, "debug mode")
+	slog.SetLogLoggerLevel(slog.LevelInfo)
+	if *DebugFlag {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+	}
 	r := gin.Default()
 	r.POST("/tag", api.Tag)
 	r.Run(":8080")
