@@ -1,28 +1,16 @@
 package registry
 
 import (
-	"log"
 	"testing"
 )
 
 func TestTag(t *testing.T) {
-	originOpt, err := GetImageInfo("docker.io/cbluebird/crk-nginx:latest")
-	if err != nil {
-		log.Println(err)
-	}
-
-	client := Client{
+	client := &Client{
 		Username: "",
 		Password: "",
 	}
-
-	newOpt := ImageOptions{
-		HostName:  "index.docker.io",
-		ImageName: "cbluebird/crk-nginx-test",
-		Tag:       "test",
-	}
-
-	if err := client.Tag(*originOpt, newOpt); err != nil {
-		log.Println(err)
+	err := client.ReTag("sealos.hub:5000/cbluebird/crk-nginx-test:latest-1", "sealos.hub:5000/cbluebird/crk-nginx-test:latest-2")
+	if err != nil {
+		return
 	}
 }
