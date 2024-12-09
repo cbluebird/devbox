@@ -14,7 +14,7 @@ import (
 func main() {
 	user := os.Getenv("USER")
 	password := os.Getenv("PASSWORD")
-	tag.Init(user, password)
+	tag.New(user, password)
 	if os.Getenv("GIN_MODE") != gin.DebugMode {
 		gin.SetMode(gin.ReleaseMode)
 	}

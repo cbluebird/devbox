@@ -19,7 +19,7 @@ func Tag(c *gin.Context) {
 		return
 	}
 
-	if err := tag.TagClient.Tag(request.Original, request.Target); err != nil {
+	if err := tag.TagEngine.Tag(request.Original, request.Target); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 			"code":    500,

@@ -8,7 +8,7 @@ import (
 )
 
 func TestAuth(t *testing.T) {
-	secret, _ := GenerateTokenWithExpiry("1234567890", time.Minute)
+	secret, _ := GenerateTokenWithExpiry("1234567890", time.Hour)
 	log.Printf(secret)
 }
 

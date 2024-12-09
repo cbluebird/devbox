@@ -1,72 +1,80 @@
-package tag
+package registry
 
 import (
+	"context"
 	"log/slog"
 
 	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/heroku/docker-registry-client/registry"
+	registry "github.com/regclient/regclient"
+	"github.com/regclient/regclient/config"
+	"github.com/regclient/regclient/types/ref"
 )
 
-var TagClient *Client
+var TagEngine *Client
 
 type Client struct {
 	Username string
 	Password string
 }
 
-type ImageOptions struct {
-	HostName  string
-	ImageName string
-	Tag       string
-}
-
-func Init(user, password string) {
-	TagClient = &Client{
-		Username: user,
+func New(username, password string) {
+	TagEngine = &Client{
+		Username: username,
 		Password: password,
 	}
 }
 
 func (c *Client) Tag(originImage, newImage string) error {
-	originOpt, err := GetImageInfo(originImage)
+	original, err := name.ParseReference(originImage)
 	if err != nil {
 		slog.Error("Error getting origin image info", "Error", err)
 		return err
 	}
-	newOpt, err := GetImageInfo(newImage)
+	originalRef := ref.Ref{
+		Scheme:     "reg",
+		Registry:   original.Context().RegistryStr(),
+		Repository: original.Context().RepositoryStr(),
+		Tag:        original.Identifier(),
+	}
+
+	target, err := name.ParseReference(newImage)
 	if err != nil {
 		slog.Error("Error getting new image info", "Error", err)
 		return err
 	}
+	targetRef := ref.Ref{
+		Scheme:     "reg",
+		Registry:   target.Context().RegistryStr(),
+		Repository: target.Context().RepositoryStr(),
+		Tag:        target.Identifier(),
+	}
 
-	hub, err := registry.New("http://"+originOpt.HostName, c.Username, c.Password)
-	if nil != err {
-		slog.Error("Failed to create hub", "Error", err)
-		return err
-	}
-	manifest, err := hub.ManifestV2(originOpt.ImageName, originOpt.Tag)
-	if nil != err {
-		slog.Error("Failed to get manifest", "Error", err)
-		return err
-	}
-	err = hub.PutManifest(newOpt.ImageName, newOpt.Tag, manifest)
+	originHost := config.HostNewDefName(nil, "http://"+originalRef.Registry)
+	originHost.User = c.Username
+	originHost.Pass = c.Password
+	originHost.TLS = config.TLSDisabled
+
+	targetHost := config.HostNewDefName(nil, "http://"+targetRef.Registry)
+	targetHost.User = c.Username
+	targetHost.Pass = c.Password
+	targetHost.TLS = config.TLSDisabled
+
+	slog.Info("Attempting registry connection",
+		"originRegistry", originalRef.Registry,
+		"targetRegistry", targetRef.Registry,
+		"username", c.Username)
+
+	hub := registry.New(
+		registry.WithConfigHost(*originHost),
+		registry.WithConfigHost(*targetHost),
+	)
+
+	err = hub.ImageCopy(context.Background(), originalRef, targetRef)
 	if err != nil {
-		slog.Error("Failed to put manifest", "Error", err)
+		slog.Error("Error copying image", "Error", err)
 		return err
 	}
+
 	slog.Info("Tag success", "OriginImage", originImage, "NewImage", newImage)
 	return nil
-}
-
-func GetImageInfo(imageRef string) (*ImageOptions, error) {
-	res, err := name.ParseReference(imageRef)
-	if err != nil {
-		return nil, err
-	}
-	repo := res.Context()
-	return &ImageOptions{
-		HostName:  repo.RegistryStr(),
-		ImageName: repo.RepositoryStr(),
-		Tag:       res.Identifier(),
-	}, nil
 }
